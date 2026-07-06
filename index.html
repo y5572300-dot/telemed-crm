@@ -1,0 +1,1516 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Личные финансы — план/факт</title>
+    <style>
+      :root {
+        --bg: #f7f7fb;
+        --card: #ffffff;
+        --text: #111827;
+        --muted: #6b7280;
+        --border: rgba(17, 24, 39, 0.09);
+        --accent: #6d28d9;
+        --accent-weak: rgba(109, 40, 217, 0.14);
+        --good: #16a34a;
+        --warn: #f59e0b;
+        --bad: #dc2626;
+        --shadow: 0 20px 45px rgba(17, 24, 39, 0.08);
+        --radius: 18px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial,
+          "Apple Color Emoji",
+          "Segoe UI Emoji";
+        color: var(--text);
+        background: radial-gradient(1000px 650px at 20% 0%, rgba(109, 40, 217, 0.12) 0%, transparent 55%),
+          radial-gradient(850px 600px at 85% 10%, rgba(16, 185, 129, 0.08) 0%, transparent 55%), var(--bg);
+      }
+
+      .wrap {
+        max-width: 1050px;
+        margin: 0 auto;
+        padding: 28px 16px 48px;
+      }
+
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 16px 18px;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .tabs {
+        display: inline-flex;
+        gap: 6px;
+        padding: 6px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.72);
+        backdrop-filter: blur(10px);
+      }
+
+      .tab {
+        border: 1px solid transparent;
+        background: transparent;
+        padding: 9px 12px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-weight: 750;
+        color: rgba(17, 24, 39, 0.72);
+      }
+
+      .tab[aria-selected="true"] {
+        color: #4c1d95;
+        background: rgba(109, 40, 217, 0.12);
+        border-color: rgba(109, 40, 217, 0.18);
+      }
+
+      .month-tabs {
+        display: flex;
+        gap: 6px;
+        padding: 6px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.72);
+        backdrop-filter: blur(10px);
+        overflow-x: auto;
+        scrollbar-width: thin;
+      }
+
+      .month-tab {
+        border: 1px solid transparent;
+        background: transparent;
+        padding: 8px 10px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 750;
+        color: rgba(17, 24, 39, 0.72);
+        white-space: nowrap;
+      }
+
+      .month-tab[aria-selected="true"] {
+        color: #4c1d95;
+        background: rgba(109, 40, 217, 0.12);
+        border-color: rgba(109, 40, 217, 0.18);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: -0.02em;
+      }
+
+      .subtitle {
+        margin-top: 6px;
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.35;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+
+      .controls {
+        padding: 14px 14px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: end;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      select,
+      input[type="text"],
+      input[type="number"] {
+        width: 100%;
+        padding: 10px 10px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--text);
+        outline: none;
+      }
+
+      select:focus,
+      input:focus {
+        border-color: rgba(109, 40, 217, 0.32);
+        box-shadow: 0 0 0 4px rgba(109, 40, 217, 0.12);
+      }
+
+      .btn {
+        border: 1px solid rgba(109, 40, 217, 0.18);
+        background: linear-gradient(180deg, rgba(109, 40, 217, 0.08) 0%, rgba(109, 40, 217, 0.04) 100%);
+        color: #5b21b6;
+        border-radius: 12px;
+        padding: 10px 12px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .btn:hover {
+        border-color: rgba(109, 40, 217, 0.32);
+      }
+
+      .btn:active {
+        transform: translateY(1px);
+      }
+
+      .summary {
+        padding: 14px 14px 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .pill {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px;
+        background: linear-gradient(180deg, #fff 0%, rgba(109, 40, 217, 0.02) 100%);
+      }
+
+      .pill .k {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .pill .v {
+        margin-top: 6px;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .v.good {
+        color: var(--good);
+      }
+
+      .v.bad {
+        color: var(--bad);
+      }
+
+      .goals {
+        margin: 10px 14px 0;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: linear-gradient(180deg, #fff 0%, rgba(16, 185, 129, 0.03) 100%);
+        overflow: hidden;
+      }
+
+      .goals-head {
+        padding: 12px 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 14px;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .goals-title {
+        font-weight: 850;
+        letter-spacing: -0.01em;
+      }
+
+      .goals-sub {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 4px;
+        line-height: 1.35;
+      }
+
+      .goals-body {
+        padding: 10px 12px 12px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .goal-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr 0.9fr 0.9fr;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .goal-grid .h {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 750;
+      }
+
+      .goal-row {
+        padding: 8px 10px;
+        border: 1px solid rgba(17, 24, 39, 0.08);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.8);
+      }
+
+      .goal-name {
+        font-weight: 750;
+      }
+
+      .goal-num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .table-wrap {
+        padding: 8px 14px 14px;
+        overflow: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 900px;
+      }
+
+      thead th {
+        position: sticky;
+        top: 0;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(10px);
+        z-index: 1;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 10px 10px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+        font-size: 13px;
+      }
+
+      th {
+        color: var(--muted);
+        font-weight: 700;
+        font-size: 12px;
+      }
+
+      th.sep,
+      td.sep {
+        border-left: 1px solid var(--border);
+      }
+
+      td.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .spent {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .spent input[type="number"] {
+        text-align: right;
+        padding: 9px 10px;
+      }
+
+      .plan input[type="number"] {
+        text-align: right;
+        padding: 9px 10px;
+      }
+
+      /* убрать стрелочки у number */
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      input[type="number"] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+      }
+
+      .progress {
+        height: 10px;
+        background: rgba(109, 40, 217, 0.08);
+        border-radius: 999px;
+        overflow: hidden;
+        border: 1px solid rgba(109, 40, 217, 0.14);
+      }
+
+      .bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, rgba(109, 40, 217, 0.9), rgba(109, 40, 217, 0.55));
+      }
+
+      .bar.warn {
+        background: linear-gradient(90deg, rgba(245, 158, 11, 0.95), rgba(245, 158, 11, 0.5));
+      }
+
+      .bar.bad {
+        background: linear-gradient(90deg, rgba(220, 38, 38, 0.95), rgba(220, 38, 38, 0.5));
+      }
+
+      .bar.good {
+        background: linear-gradient(90deg, rgba(22, 163, 74, 0.95), rgba(22, 163, 74, 0.5));
+      }
+
+      .paid-row {
+        opacity: 0.72;
+      }
+      .paid-row .row-title .cat {
+        text-decoration: line-through;
+        text-decoration-thickness: 1px;
+        text-decoration-color: rgba(17, 24, 39, 0.35);
+      }
+
+      .check {
+        display: grid;
+        place-items: center;
+      }
+      .check input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--accent);
+      }
+
+      .totals {
+        padding: 14px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .totals h2 {
+        margin: 0;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+      }
+
+      .history {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.7);
+        overflow: hidden;
+      }
+
+      .history-head {
+        padding: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 12px;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .history-body {
+        padding: 10px 12px 12px;
+        display: grid;
+        gap: 8px;
+        color: rgba(17, 24, 39, 0.84);
+        font-size: 13px;
+      }
+
+      .history-item {
+        padding: 8px 10px;
+        border: 1px solid rgba(17, 24, 39, 0.08);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.85);
+        display: grid;
+        gap: 2px;
+      }
+
+      .history-item .meta {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .row-title {
+        display: grid;
+        gap: 2px;
+      }
+
+      .row-title .cat {
+        font-weight: 650;
+      }
+
+      .row-title .hint {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .foot {
+        padding: 12px 14px 14px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .linklike {
+        border: none;
+        background: transparent;
+        color: #5b21b6;
+        padding: 0;
+        cursor: pointer;
+        font-weight: 650;
+      }
+
+      .danger {
+        color: #b91c1c;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div>
+          <h1>Финансы: план / факт / остаток</h1>
+          <div class="subtitle">
+            Выберите раздел и месяц, затем внесите «потрачено» по статьям. Данные «потрачено» сохраняются
+            локально в браузере.
+          </div>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Разделы">
+          <button class="tab" id="tab-expenses" type="button" role="tab" aria-selected="true">Расходы</button>
+          <button class="tab" id="tab-yasya" type="button" role="tab" aria-selected="false">Личный план Яся</button>
+          <button class="tab" id="tab-total" type="button" role="tab" aria-selected="false">Итого</button>
+        </div>
+      </header>
+
+      <section class="card">
+        <div class="controls">
+          <div>
+            <div style="font-size:12px;color:var(--muted);margin:0 0 6px 2px;">Месяц</div>
+            <div class="month-tabs" id="monthTabs" role="tablist" aria-label="Месяцы"></div>
+            <select id="month" hidden></select>
+          </div>
+          <button class="btn" id="addCategoryBtn" type="button">+ Добавить статью</button>
+        </div>
+
+        <div class="summary" id="summary"></div>
+
+        <div class="goals" id="goalsBox" hidden>
+          <div class="goals-head">
+            <div>
+              <div class="goals-title">Цели (коплю)</div>
+              <div class="goals-sub">
+                Отметьте, какие статьи считать целями. Они суммируются по всем месяцам при внесении значений.
+              </div>
+            </div>
+            <button class="btn" id="goalsManageBtn" type="button">Настроить</button>
+          </div>
+          <div class="goals-body" id="goalsBody"></div>
+        </div>
+
+        <div class="table-wrap" id="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 30%">Статья</th>
+                <th class="num" style="width: 14%">План</th>
+                <th style="width: 20%">Потрачено</th>
+                <th class="num" style="width: 14%">Осталось</th>
+                <th style="width: 16%">Прогресс</th>
+                <th class="sep" style="width: 6%">Готово</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+
+        <div class="totals" id="totalsWrap" hidden>
+          <h2>Итого</h2>
+          <div class="summary" id="totalsSummary"></div>
+          <div class="history">
+            <div class="history-head">
+              <div>
+                <div style="font-weight:850;letter-spacing:-0.01em;">История изменений</div>
+                <div style="color:var(--muted);font-size:12px;margin-top:4px;">
+                  Отслеживает, что вы меняли (план/потрачено/готово). Можно выгрузить как JSON.
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <button class="btn" id="exportHistoryBtn" type="button">Экспорт</button>
+                <button class="linklike danger" id="clearHistoryBtn" type="button">Очистить историю</button>
+              </div>
+            </div>
+            <div class="history-body" id="historyBody"></div>
+          </div>
+          <div style="color:var(--muted);font-size:12px;line-height:1.45;">
+            Идея для накоплений: выберите цели в разделе Яси и вносите «внесено» — тогда в блоке «Цели (коплю)» будет видно,
+            сколько уже накоплено и сколько осталось. История поможет видеть, как менялись суммы по времени.
+          </div>
+        </div>
+
+        <div class="foot">
+          <div>
+            Подсказка: можно вносить трату постепенно — остаток и прогресс пересчитаются автоматически.
+          </div>
+          <div>
+            <button class="linklike danger" id="resetBtn" type="button">Сбросить «потрачено» для этого месяца</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+      import {
+        getFirestore,
+        doc,
+        onSnapshot,
+        setDoc,
+        serverTimestamp
+      } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+      import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCUkEltuQbKwRjaedGhf5A1Q5pnPYOBMGI",
+        authDomain: "family-finance-fa8db.firebaseapp.com",
+        projectId: "family-finance-fa8db",
+        storageBucket: "family-finance-fa8db.firebasestorage.app",
+        messagingSenderId: "557444543291",
+        appId: "1:557444543291:web:204cd310d593db6d6dbd1e"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
+      // Данные плана извлечены из Excel:
+      // - лист "Лист3" → семейные/общие расходы (колонки с месяцем и статьями)
+      // - лист "Яся" → план Яси по статьям
+      const BUDGETS = {
+        list3: {
+          label: "расходы",
+          months: {
+            август: {
+              "бензин": 30000,
+              "еда/кафе": 91000,
+              "ипотека Саша": 22000,
+              "ипотека Яся": 65000,
+              "ком.услуги": 15000,
+              "оля к школе": 30000,
+              "отпуск": 50000,
+              "школа за октябрь": 57000
+            },
+            июль: {
+              "бензин": 30000,
+              "еда/кафе": 93000,
+              "ипотека Саша": 22000,
+              "ипотека Яся": 65000,
+              "ком.услуги": 15000,
+              "оля": 15000,
+              "отпуск": 120000
+            },
+            июнь: {
+              "бензин": 30000,
+              "еда/кафе": 96000,
+              "ипотека Саша": 22000,
+              "ипотека Яся": 65000,
+              "ком.услуги": 15000,
+              "оля": 15000,
+              "отпуск": 60000,
+              "школа сентябрь": 57000
+            },
+            май: {
+              "бензин": 26000,
+              "велосипед Оля": 24000,
+              "еда/кафе": 80000,
+              "ипотека Саша": 22000,
+              "ипотека Яся": 60000,
+              "ком.услуги": 30000,
+              "кредитка (отпуск яся и оля)": 60000,
+              "оля": 11000,
+              "отпуск яся+оля с собой": 32000,
+              "то мото": 15000
+            }
+          }
+        },
+        yasya: {
+          label: "Яся — личный план",
+          months: {
+            август: {
+              "базовые траты": 180000,
+              "волосы": 10000,
+              "лизинг": 30000,
+              "липоскульптурирование": 70000,
+              "подушка бп": 10000
+            },
+            декабрь: {
+              "базовые траты": 180000,
+              "лизинг": 30000,
+              "машина": 50000,
+              "подарки": 40000
+            },
+            июль: {
+              "базовые траты": 180000,
+              "волосы": 10000,
+              "лизинг": 30000,
+              "липоскульптурирование": 360000,
+              "подушка бп": 30000
+            },
+            июнь: {
+              "базовые траты": 180000,
+              "волосы": 10000,
+              "лизинг": 30000,
+              "липоскульптурирование": 55000,
+              "подушка бп": 25000
+            },
+            май: {
+              "23е": 20000,
+              "базовые траты": 180000,
+              "волосы": 10000,
+              "доброград": 45000,
+              "лизинг": 30000,
+              "липоскульптурирование": 110000,
+              "подушка бп": 10000
+            },
+            ноябрь: {
+              "базовые траты": 180000,
+              "волосы": 10000,
+              "лизинг": 60000,
+              "машина": 280000,
+              "подушка бп": 70000
+            },
+            октябрь: {
+              "базовые траты": 180000,
+              "волосы": 10000,
+              "лизинг": 50000,
+              "липоскульптурирование": 300000,
+              "подушка бп": 60000
+            },
+            сентябрь: {
+              "базовые траты": 180000,
+              "волосы": 10000,
+              "лизинг": 30000,
+              "липоскульптурирование": 35000,
+              "подарок саше": 45000
+            }
+          }
+        }
+      };
+
+      const MONTHS_ORDER = [
+        "январь",
+        "февраль",
+        "март",
+        "апрель",
+        "май",
+        "июнь",
+        "июль",
+        "август",
+        "сентябрь",
+        "октябрь",
+        "ноябрь",
+        "декабрь"
+      ];
+
+      const $month = document.getElementById("month");
+      const $monthTabs = document.getElementById("monthTabs");
+      const $rows = document.getElementById("rows");
+      const $summary = document.getElementById("summary");
+      const $resetBtn = document.getElementById("resetBtn");
+      const $addCategoryBtn = document.getElementById("addCategoryBtn");
+      const $goalsBox = document.getElementById("goalsBox");
+      const $goalsBody = document.getElementById("goalsBody");
+      const $goalsManageBtn = document.getElementById("goalsManageBtn");
+      const $tabExpenses = document.getElementById("tab-expenses");
+      const $tabYasya = document.getElementById("tab-yasya");
+      const $tabTotal = document.getElementById("tab-total");
+      const $tableWrap = document.getElementById("tableWrap");
+      const $totalsWrap = document.getElementById("totalsWrap");
+      const $totalsSummary = document.getElementById("totalsSummary");
+      const $historyBody = document.getElementById("historyBody");
+      const $exportHistoryBtn = document.getElementById("exportHistoryBtn");
+      const $clearHistoryBtn = document.getElementById("clearHistoryBtn");
+
+      let activeSourceKey = "list3";
+      let activeView = "table"; // table | totals
+      let ROW_REFS = {};
+
+      // ===== Синхронизация (общий доступ для семьи) =====
+      function encodeKey(s) {
+        return encodeURIComponent(String(s));
+      }
+      function decodeKey(s) {
+        try {
+          return decodeURIComponent(String(s));
+        } catch {
+          return String(s);
+        }
+      }
+
+      function spaceIdKey() {
+        return "finance:v2:spaceId";
+      }
+
+      function getSpaceId() {
+        const url = new URL(window.location.href);
+        const fromUrl = url.searchParams.get("space");
+        const fromLs = localStorage.getItem(spaceIdKey());
+        return (fromUrl || fromLs || "").trim();
+      }
+
+      function setSpaceId(next) {
+        const id = (next || "").trim();
+        if (!id) return;
+        localStorage.setItem(spaceIdKey(), id);
+        const url = new URL(window.location.href);
+        url.searchParams.set("space", id);
+        history.replaceState({}, "", url.toString());
+      }
+
+      function randomSpaceId() {
+        const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        let out = "";
+        for (let i = 0; i < 8; i++) out += alphabet[Math.floor(Math.random() * alphabet.length)];
+        return out;
+      }
+
+      // Локальный кэш + состояние, которое синхронизируем
+      const CLOUD_CACHE_KEY = "finance:v2:cloudCache";
+      let cloud = {
+        spent: {},
+        paid: {},
+        planOverride: {},
+        goalsYasya: [],
+        history: []
+      };
+      let isApplyingRemote = false;
+      let saveTimer = null;
+      let docRef = null;
+
+      function loadCloudCache() {
+        try {
+          const raw = localStorage.getItem(CLOUD_CACHE_KEY);
+          if (!raw) return;
+          const obj = JSON.parse(raw);
+          if (obj && typeof obj === "object") cloud = { ...cloud, ...obj };
+        } catch {
+          // ignore
+        }
+      }
+      loadCloudCache();
+
+      function persistCloudCache() {
+        localStorage.setItem(CLOUD_CACHE_KEY, JSON.stringify(cloud));
+      }
+
+      function scheduleSaveCloud() {
+        if (!docRef) return;
+        if (isApplyingRemote) return;
+        if (saveTimer) window.clearTimeout(saveTimer);
+        saveTimer = window.setTimeout(async () => {
+          saveTimer = null;
+          try {
+            await setDoc(
+              docRef,
+              {
+                ...cloud,
+                updatedAt: serverTimestamp()
+              },
+              { merge: true }
+            );
+          } catch (e) {
+            console.warn("Cloud save failed", e);
+          }
+        }, 350);
+      }
+
+      async function initCloud() {
+        // если кода нет — создадим и покажем в URL
+        let space = getSpaceId();
+        if (!space) {
+          space = randomSpaceId();
+          setSpaceId(space);
+        }
+
+        await signInAnonymously(auth);
+        docRef = doc(db, "spaces", space);
+
+        onSnapshot(
+          docRef,
+          (snap) => {
+            if (!snap.exists()) {
+              // создадим документ с текущим локальным кэшем
+              scheduleSaveCloud();
+              return;
+            }
+            const data = snap.data() || {};
+            isApplyingRemote = true;
+            cloud = {
+              ...cloud,
+              spent: data.spent || {},
+              paid: data.paid || {},
+              planOverride: data.planOverride || {},
+              goalsYasya: Array.isArray(data.goalsYasya) ? data.goalsYasya : [],
+              history: Array.isArray(data.history) ? data.history : []
+            };
+            persistCloudCache();
+            isApplyingRemote = false;
+            // обновим UI
+            if (activeView === "table") buildTable();
+            else buildTotals();
+          },
+          (err) => console.warn("Cloud snapshot error", err)
+        );
+      }
+
+      // стартуем синхронизацию, но UI работает и без неё (из кэша)
+      initCloud().catch((e) => console.warn("Cloud init failed", e));
+
+      function money(n) {
+        const v = Number.isFinite(n) ? n : 0;
+        return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(Math.round(v)) + " ₽";
+      }
+
+      function storageKey(sourceKey, monthKey) {
+        return `finance:v1:spent:${sourceKey}:${monthKey}`;
+      }
+
+      function paidStorageKey(sourceKey, monthKey) {
+        return `finance:v1:paid:${sourceKey}:${monthKey}`;
+      }
+
+      function goalsKey() {
+        return "finance:v1:goals:yasya";
+      }
+
+      function planOverrideKey(sourceKey, monthKey) {
+        return `finance:v1:planOverride:${sourceKey}:${monthKey}`;
+      }
+
+      function historyKey() {
+        return "finance:v1:history";
+      }
+
+      function logEvent(evt) {
+        const next = Array.isArray(cloud.history) ? cloud.history.slice() : [];
+        next.push({ ...evt, ts: new Date().toISOString() });
+        while (next.length > 300) next.shift();
+        cloud.history = next;
+        persistCloudCache();
+        scheduleSaveCloud();
+      }
+
+      function readHistory() {
+        return Array.isArray(cloud.history) ? cloud.history : [];
+      }
+
+      function readPlanOverride(sourceKey, monthKey) {
+        const s = cloud.planOverride?.[sourceKey]?.[monthKey];
+        const obj = s && typeof s === "object" ? s : {};
+        const out = {};
+        for (const [k, v] of Object.entries(obj)) out[decodeKey(k)] = Number(v || 0);
+        return out;
+      }
+
+      function writePlanOverride(sourceKey, monthKey, overrideMap) {
+        const encMap = {};
+        for (const [k, v] of Object.entries(overrideMap || {})) encMap[encodeKey(k)] = Number(v || 0);
+        cloud.planOverride = cloud.planOverride || {};
+        cloud.planOverride[sourceKey] = cloud.planOverride[sourceKey] || {};
+        cloud.planOverride[sourceKey][monthKey] = encMap;
+        persistCloudCache();
+        scheduleSaveCloud();
+      }
+
+      function readSpent(sourceKey, monthKey) {
+        const s = cloud.spent?.[sourceKey]?.[monthKey];
+        const obj = s && typeof s === "object" ? s : {};
+        const out = {};
+        for (const [k, v] of Object.entries(obj)) out[decodeKey(k)] = Number(v || 0);
+        return out;
+      }
+
+      function writeSpent(sourceKey, monthKey, spentMap) {
+        const encMap = {};
+        for (const [k, v] of Object.entries(spentMap || {})) encMap[encodeKey(k)] = Number(v || 0);
+        cloud.spent = cloud.spent || {};
+        cloud.spent[sourceKey] = cloud.spent[sourceKey] || {};
+        cloud.spent[sourceKey][monthKey] = encMap;
+        persistCloudCache();
+        scheduleSaveCloud();
+      }
+
+      function readPaid(sourceKey, monthKey) {
+        const s = cloud.paid?.[sourceKey]?.[monthKey];
+        const obj = s && typeof s === "object" ? s : {};
+        const out = {};
+        for (const [k, v] of Object.entries(obj)) out[decodeKey(k)] = !!v;
+        return out;
+      }
+
+      function writePaid(sourceKey, monthKey, paidMap) {
+        const encMap = {};
+        for (const [k, v] of Object.entries(paidMap || {})) encMap[encodeKey(k)] = !!v;
+        cloud.paid = cloud.paid || {};
+        cloud.paid[sourceKey] = cloud.paid[sourceKey] || {};
+        cloud.paid[sourceKey][monthKey] = encMap;
+        persistCloudCache();
+        scheduleSaveCloud();
+      }
+
+      function getSelected() {
+        const sourceKey = activeSourceKey;
+        const monthKey = $month.value;
+        const base = BUDGETS[sourceKey]?.months?.[monthKey] || {};
+        const override = readPlanOverride(sourceKey, monthKey);
+        return { sourceKey, monthKey, budget: { ...base, ...override } };
+      }
+
+      function monthOptionsFor(sourceKey) {
+        const months = Object.keys(BUDGETS[sourceKey].months || {});
+        months.sort((a, b) => MONTHS_ORDER.indexOf(a) - MONTHS_ORDER.indexOf(b));
+        return months;
+      }
+
+      function buildMonthSelect(sourceKey) {
+        const months = monthOptionsFor(sourceKey);
+        $month.innerHTML = "";
+        for (const m of months) {
+          const opt = document.createElement("option");
+          opt.value = m;
+          opt.textContent = m[0].toUpperCase() + m.slice(1);
+          $month.appendChild(opt);
+        }
+        // по умолчанию пытаемся выбрать текущий месяц, если он есть в данных
+        const now = new Date();
+        const currentMonth = MONTHS_ORDER[now.getMonth()];
+        if (months.includes(currentMonth)) $month.value = currentMonth;
+        else $month.value = months[0] || "";
+      }
+
+      function buildMonthTabs(sourceKey) {
+        const months = monthOptionsFor(sourceKey);
+        $monthTabs.innerHTML = "";
+        for (const m of months) {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "month-tab";
+          b.setAttribute("role", "tab");
+          b.setAttribute("aria-selected", m === $month.value ? "true" : "false");
+          b.textContent = m[0].toUpperCase() + m.slice(1);
+          b.addEventListener("click", () => {
+            $month.value = m;
+            buildMonthTabs(activeSourceKey);
+            if (activeView === "table") buildTable();
+            else buildTotals();
+          });
+          $monthTabs.appendChild(b);
+        }
+      }
+
+      function readGoalsSet() {
+        return new Set((Array.isArray(cloud.goalsYasya) ? cloud.goalsYasya : []).map(decodeKey));
+      }
+
+      function writeGoalsSet(set) {
+        cloud.goalsYasya = Array.from(set).map(encodeKey);
+        persistCloudCache();
+        scheduleSaveCloud();
+      }
+
+      function calcTotals(budgetMap, spentMap) {
+        const cats = Object.keys(budgetMap);
+        let plan = 0;
+        let spent = 0;
+        for (const c of cats) {
+          plan += Number(budgetMap[c] || 0);
+          spent += Number(spentMap[c] || 0);
+        }
+        return { plan, spent, left: plan - spent };
+      }
+
+      function barClass(pct) {
+        if (pct > 1.0) return "bar bad";
+        if (pct >= 1.0) return "bar good";
+        if (pct >= 0.8) return "bar warn";
+        return "bar";
+      }
+
+      function renderSummary(budget, spentMap) {
+        const totals = calcTotals(budget, spentMap);
+        $summary.innerHTML = "";
+        const pills = [
+          { k: "План на месяц", v: money(totals.plan) },
+          { k: "Потрачено", v: money(totals.spent) },
+          { k: "Осталось", v: money(totals.left), cls: totals.left >= 0 ? "good" : "bad" }
+        ];
+        for (const p of pills) {
+          const el = document.createElement("div");
+          el.className = "pill";
+          el.innerHTML = `<div class="k">${p.k}</div><div class="v ${p.cls || ""}">${p.v}</div>`;
+          $summary.appendChild(el);
+        }
+      }
+
+      function updateRowUI(cat, plan, spent, paid) {
+        const ref = ROW_REFS[cat];
+        if (!ref) return;
+
+        const left = plan - spent;
+        ref.leftTd.textContent = money(left);
+        ref.leftTd.style.color = left < 0 ? "var(--bad)" : "";
+
+        const pct = plan > 0 ? spent / plan : 0;
+        const pctClamped = Math.max(0, Math.min(1.2, pct));
+        ref.bar.className = barClass(pct);
+        ref.bar.style.width = `${(pctClamped * 100).toFixed(0)}%`;
+
+        ref.tr.classList.toggle("paid-row", !!paid);
+        ref.input.disabled = !!paid;
+      }
+
+      function computeYasyaGoalsStats() {
+        const goals = readGoalsSet();
+        const months = monthOptionsFor("yasya");
+
+        const byGoal = {};
+        let totalPlan = 0;
+        let totalSaved = 0;
+
+        for (const m of months) {
+          const base = BUDGETS.yasya.months[m] || {};
+          const override = readPlanOverride("yasya", m);
+          const budget = { ...base, ...override };
+          const spent = readSpent("yasya", m);
+          for (const [cat, planVal] of Object.entries(budget)) {
+            if (!goals.has(cat)) continue;
+            const plan = Number(planVal || 0);
+            const saved = Number(spent[cat] || 0);
+            if (!byGoal[cat]) byGoal[cat] = { plan: 0, saved: 0 };
+            byGoal[cat].plan += plan;
+            byGoal[cat].saved += saved;
+          }
+        }
+
+        for (const v of Object.values(byGoal)) {
+          totalPlan += v.plan;
+          totalSaved += v.saved;
+        }
+
+        return { goals, byGoal, totalPlan, totalSaved, totalLeft: totalPlan - totalSaved };
+      }
+
+      function renderGoalsBox() {
+        if (activeSourceKey !== "yasya") {
+          $goalsBox.hidden = true;
+          return;
+        }
+        $goalsBox.hidden = false;
+
+        const { byGoal, totalPlan, totalSaved, totalLeft } = computeYasyaGoalsStats();
+        const cats = Object.keys(byGoal).sort((a, b) => a.localeCompare(b, "ru"));
+
+        $goalsBody.innerHTML = "";
+
+        const head = document.createElement("div");
+        head.className = "goal-grid";
+        head.innerHTML = `
+          <div class="h">Цель</div>
+          <div class="h goal-num">План (всего)</div>
+          <div class="h goal-num">Внесено</div>
+          <div class="h goal-num">Осталось</div>
+        `;
+        $goalsBody.appendChild(head);
+
+        if (cats.length === 0) {
+          const empty = document.createElement("div");
+          empty.style.color = "var(--muted)";
+          empty.style.fontSize = "13px";
+          empty.textContent = "Цели не выбраны. Нажмите «Настроить» и отметьте нужные статьи.";
+          $goalsBody.appendChild(empty);
+          return;
+        }
+
+        const total = document.createElement("div");
+        total.className = "goal-row goal-grid";
+        total.innerHTML = `
+          <div class="goal-name">Итого по целям</div>
+          <div class="goal-num">${money(totalPlan)}</div>
+          <div class="goal-num">${money(totalSaved)}</div>
+          <div class="goal-num" style="color:${totalLeft >= 0 ? "var(--good)" : "var(--bad)"}">${money(totalLeft)}</div>
+        `;
+        $goalsBody.appendChild(total);
+
+        for (const cat of cats) {
+          const v = byGoal[cat];
+          const left = v.plan - v.saved;
+          const row = document.createElement("div");
+          row.className = "goal-row goal-grid";
+          row.innerHTML = `
+            <div class="goal-name">${escapeHtml(capitalizeFirstLetter(cat))}</div>
+            <div class="goal-num">${money(v.plan)}</div>
+            <div class="goal-num">${money(v.saved)}</div>
+            <div class="goal-num" style="color:${left >= 0 ? "var(--text)" : "var(--bad)"}">${money(left)}</div>
+          `;
+          $goalsBody.appendChild(row);
+        }
+      }
+
+      function buildTable() {
+        ROW_REFS = {};
+        const { sourceKey, monthKey, budget } = getSelected();
+        const spentMap = readSpent(sourceKey, monthKey);
+        const paidMap = readPaid(sourceKey, monthKey);
+        const categories = Object.keys(budget).sort((a, b) => a.localeCompare(b, "ru"));
+
+        renderSummary(budget, spentMap);
+        renderGoalsBox();
+
+        $rows.innerHTML = "";
+        for (const cat of categories) {
+          const plan = Number(budget[cat] || 0);
+          const spent = Number(spentMap[cat] || 0);
+          const paid = !!paidMap[cat];
+
+          const tr = document.createElement("tr");
+
+          const tdCat = document.createElement("td");
+          tdCat.innerHTML = `<div class="row-title"><div class="cat">${escapeHtml(capitalizeFirstLetter(cat))}</div><div class="hint">План: ${money(plan)}</div></div>`;
+
+          const tdPlan = document.createElement("td");
+          tdPlan.className = "num plan";
+          tdPlan.innerHTML = `<input inputmode="numeric" type="number" min="0" step="1" value="${Number.isFinite(plan) ? plan : 0}" aria-label="План по статье ${escapeAttr(capitalizeFirstLetter(cat))}" />`;
+          const planInput = tdPlan.querySelector("input");
+
+          const tdSpent = document.createElement("td");
+          tdSpent.innerHTML = `<div class="spent"><input inputmode="numeric" type="number" min="0" step="1" value="${Number.isFinite(spent) ? spent : 0}" aria-label="Потрачено по статье ${escapeAttr(capitalizeFirstLetter(cat))}" /></div>`;
+          const input = tdSpent.querySelector("input");
+
+          const tdLeft = document.createElement("td");
+          tdLeft.className = "num";
+
+          const tdProg = document.createElement("td");
+          tdProg.innerHTML = `<div class="progress"><div class="bar" style="width:0%"></div></div>`;
+          const bar = tdProg.querySelector(".bar");
+
+          const tdPaid = document.createElement("td");
+          tdPaid.className = "check sep";
+          tdPaid.innerHTML = `<input type="checkbox" aria-label="Статья погашена: ${escapeAttr(capitalizeFirstLetter(cat))}" />`;
+          const paidCheckbox = tdPaid.querySelector("input");
+          paidCheckbox.checked = paid;
+
+          ROW_REFS[cat] = { tr, input, leftTd: tdLeft, bar, paidCheckbox, planInput };
+          updateRowUI(cat, plan, spent, paid);
+
+          planInput.addEventListener("input", () => {
+            const n = Number(planInput.value);
+            const nextPlan = Number.isFinite(n) ? n : 0;
+            const override = readPlanOverride(sourceKey, monthKey);
+            const prev = Number(budget[cat] || 0);
+            override[cat] = nextPlan;
+            writePlanOverride(sourceKey, monthKey, override);
+            logEvent({ type: "plan", sourceKey, monthKey, cat, prev, next: nextPlan });
+
+            // если отмечено "готово", подгоняем потрачено под новый план
+            if (paidMap[cat]) {
+              spentMap[cat] = nextPlan;
+              writeSpent(sourceKey, monthKey, spentMap);
+              input.value = String(nextPlan);
+            }
+
+            // пересборка, чтобы корректно пересчитать план/остаток/итоги
+            buildTable();
+          });
+
+          input.addEventListener("input", () => {
+            const n = Number(input.value);
+            const prev = Number(spentMap[cat] || 0);
+            spentMap[cat] = Number.isFinite(n) ? n : 0;
+            writeSpent(sourceKey, monthKey, spentMap);
+            logEvent({ type: "spent", sourceKey, monthKey, cat, prev, next: spentMap[cat] });
+            renderSummary(budget, spentMap);
+            if (sourceKey === "yasya") renderGoalsBox();
+            updateRowUI(cat, plan, spentMap[cat], !!paidMap[cat]);
+          });
+
+          paidCheckbox.addEventListener("change", () => {
+            const isPaid = paidCheckbox.checked;
+            paidMap[cat] = isPaid;
+            writePaid(sourceKey, monthKey, paidMap);
+            logEvent({ type: "paid", sourceKey, monthKey, cat, prev: !isPaid, next: isPaid });
+
+            if (isPaid) {
+              spentMap[cat] = plan;
+              writeSpent(sourceKey, monthKey, spentMap);
+              input.value = String(plan);
+            }
+            renderSummary(budget, spentMap);
+            if (sourceKey === "yasya") renderGoalsBox();
+            updateRowUI(cat, plan, Number(spentMap[cat] || 0), isPaid);
+          });
+
+          tr.appendChild(tdCat);
+          tr.appendChild(tdPlan);
+          tr.appendChild(tdSpent);
+          tr.appendChild(tdLeft);
+          tr.appendChild(tdProg);
+          tr.appendChild(tdPaid);
+          $rows.appendChild(tr);
+        }
+      }
+
+      function calcTotalsAcrossMonths(sourceKey) {
+        const months = monthOptionsFor(sourceKey);
+        let plan = 0;
+        let spent = 0;
+        for (const m of months) {
+          const base = BUDGETS[sourceKey]?.months?.[m] || {};
+          const override = readPlanOverride(sourceKey, m);
+          const budget = { ...base, ...override };
+          const spentMap = readSpent(sourceKey, m);
+          for (const c of Object.keys(budget)) {
+            plan += Number(budget[c] || 0);
+            spent += Number(spentMap[c] || 0);
+          }
+        }
+        return { plan, spent, left: plan - spent };
+      }
+
+      function renderTotalsSummary() {
+        $totalsSummary.innerHTML = "";
+        const a = calcTotalsAcrossMonths("list3");
+        const b = calcTotalsAcrossMonths("yasya");
+
+        const blocks = [
+          { k: "Расходы — план (все месяцы)", v: money(a.plan) },
+          { k: "Расходы — потрачено", v: money(a.spent) },
+          { k: "Расходы — осталось", v: money(a.left), cls: a.left >= 0 ? "good" : "bad" },
+          { k: "Яся — план (все месяцы)", v: money(b.plan) },
+          { k: "Яся — потрачено", v: money(b.spent) },
+          { k: "Яся — осталось", v: money(b.left), cls: b.left >= 0 ? "good" : "bad" }
+        ];
+
+        for (const p of blocks) {
+          const el = document.createElement("div");
+          el.className = "pill";
+          el.innerHTML = `<div class="k">${p.k}</div><div class="v ${p.cls || ""}">${p.v}</div>`;
+          $totalsSummary.appendChild(el);
+        }
+      }
+
+      function renderHistory() {
+        const arr = readHistory().slice().reverse().slice(0, 40);
+        $historyBody.innerHTML = "";
+        if (arr.length === 0) {
+          const empty = document.createElement("div");
+          empty.style.color = "var(--muted)";
+          empty.style.fontSize = "13px";
+          empty.textContent = "Пока пусто — история начнёт появляться, когда вы будете менять план/потрачено/готово.";
+          $historyBody.appendChild(empty);
+          return;
+        }
+
+        for (const it of arr) {
+          const dt = new Date(it.ts);
+          const when = Number.isFinite(dt.getTime()) ? dt.toLocaleString("ru-RU") : it.ts;
+          const title =
+            it.type === "plan"
+              ? `План: ${it.cat}`
+              : it.type === "spent"
+                ? `Потрачено: ${it.cat}`
+                : it.type === "paid"
+                  ? `Готово: ${it.cat}`
+                  : it.type;
+          const srcLabel = it.sourceKey === "list3" ? "Расходы" : "Яся";
+          const item = document.createElement("div");
+          item.className = "history-item";
+          item.innerHTML = `
+            <div><strong>${escapeHtml(title)}</strong></div>
+            <div class="meta">${escapeHtml(srcLabel)} · ${escapeHtml(it.monthKey)} · ${escapeHtml(when)}</div>
+            <div>${escapeHtml(String(it.prev))} → ${escapeHtml(String(it.next))}</div>
+          `;
+          $historyBody.appendChild(item);
+        }
+      }
+
+      function buildTotals() {
+        renderTotalsSummary();
+        renderHistory();
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+      function escapeAttr(s) {
+        return escapeHtml(s).replaceAll("`", "&#096;");
+      }
+
+      function capitalizeFirstLetter(s) {
+        const str = String(s ?? "");
+        if (!str) return str;
+        return str.charAt(0).toUpperCase() + str.slice(1);
+      }
+
+      function addCategoryFlow() {
+        const { sourceKey, monthKey } = getSelected();
+        const name = prompt("Название статьи (как будет в таблице):");
+        if (!name) return;
+        const trimmed = name.trim();
+        if (!trimmed) return;
+
+        const planStr = prompt("План по статье (число, ₽):", "0");
+        if (planStr === null) return;
+        const plan = Number(planStr.toString().replace(",", "."));
+        if (!Number.isFinite(plan) || plan < 0) {
+          alert("Не похоже на число. Попробуйте ещё раз.");
+          return;
+        }
+
+        const budget = BUDGETS[sourceKey].months[monthKey] || (BUDGETS[sourceKey].months[monthKey] = {});
+        budget[trimmed] = plan;
+        // если категория новая — инициализируем потрачено нулём
+        const spentMap = readSpent(sourceKey, monthKey);
+        if (!(trimmed in spentMap)) {
+          spentMap[trimmed] = 0;
+          writeSpent(sourceKey, monthKey, spentMap);
+        }
+        buildTable();
+      }
+
+      function resetSpentForMonth() {
+        const { sourceKey, monthKey } = getSelected();
+        const ok = confirm("Сбросить все значения «потрачено» для выбранного месяца? Это действие нельзя отменить.");
+        if (!ok) return;
+        cloud.spent = cloud.spent || {};
+        cloud.spent[sourceKey] = cloud.spent[sourceKey] || {};
+        delete cloud.spent[sourceKey][monthKey];
+        persistCloudCache();
+        scheduleSaveCloud();
+        buildTable();
+      }
+
+      function setActiveSource(next) {
+        activeSourceKey = next;
+        $tabExpenses.setAttribute("aria-selected", next === "list3" ? "true" : "false");
+        $tabYasya.setAttribute("aria-selected", next === "yasya" ? "true" : "false");
+        $tabTotal.setAttribute("aria-selected", "false");
+        activeView = "table";
+        $tableWrap.hidden = false;
+        $summary.hidden = false;
+        $totalsWrap.hidden = true;
+        buildMonthSelect(activeSourceKey);
+        buildMonthTabs(activeSourceKey);
+        buildTable();
+      }
+
+      function setViewTotals() {
+        activeView = "totals";
+        $tabExpenses.setAttribute("aria-selected", "false");
+        $tabYasya.setAttribute("aria-selected", "false");
+        $tabTotal.setAttribute("aria-selected", "true");
+        $tableWrap.hidden = true;
+        $goalsBox.hidden = true;
+        $summary.hidden = true;
+        $totalsWrap.hidden = false;
+        buildTotals();
+      }
+
+      function manageGoalsFlow() {
+        if (activeSourceKey !== "yasya") return;
+        const allCats = new Set();
+        for (const m of monthOptionsFor("yasya")) {
+          for (const c of Object.keys(BUDGETS.yasya.months[m] || {})) allCats.add(c);
+        }
+        const cats = Array.from(allCats).sort((a, b) => a.localeCompare(b, "ru"));
+        const current = readGoalsSet();
+
+        // на всякий случай предложим очевидные цели по умолчанию, если пусто
+        if (current.size === 0) {
+          for (const c of cats) {
+            const lc = c.toLowerCase();
+            if (lc.includes("подушка") || lc.includes("липоскульп") || lc.includes("машин") || lc.includes("подарок") || lc.includes("доброград")) {
+              current.add(c);
+            }
+          }
+        }
+
+        const preview = cats.map((c) => `${current.has(c) ? "[x]" : "[ ]"} ${c}`).join("\\n");
+        const input = prompt(
+          "Настройка целей (коплю)\\n\\n" +
+            "Введите через запятую те статьи, которые считать целями.\\n\\n" +
+            "Подсказка (список статей):\\n" +
+            preview +
+            "\\n\\n" +
+            "Ввод:",
+          Array.from(current).join(", ")
+        );
+        if (input === null) return;
+        const next = new Set(
+          input
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        );
+        writeGoalsSet(next);
+        renderGoalsBox();
+      }
+
+      buildMonthSelect(activeSourceKey);
+      buildMonthTabs(activeSourceKey);
+
+      $tabExpenses.addEventListener("click", () => setActiveSource("list3"));
+      $tabYasya.addEventListener("click", () => setActiveSource("yasya"));
+      $tabTotal.addEventListener("click", () => setViewTotals());
+      $month.addEventListener("change", () => buildTable());
+      $resetBtn.addEventListener("click", resetSpentForMonth);
+      $addCategoryBtn.addEventListener("click", addCategoryFlow);
+      $goalsManageBtn.addEventListener("click", manageGoalsFlow);
+      $exportHistoryBtn.addEventListener("click", () => {
+        const payload = JSON.stringify(readHistory(), null, 2);
+        // без файлов: просто показываем в новом окне/вкладке
+        const w = window.open("", "_blank");
+        if (!w) {
+          alert("Браузер заблокировал новое окно. Разрешите всплывающие окна или скопируйте вручную из консоли.");
+          console.log(payload);
+          return;
+        }
+        w.document.write(`<pre style="white-space:pre-wrap;font-family:ui-monospace,Menlo,Monaco,Consolas,monospace;padding:16px;">${escapeHtml(payload)}</pre>`);
+        w.document.title = "История (экспорт)";
+      });
+      $clearHistoryBtn.addEventListener("click", () => {
+        const ok = confirm("Очистить историю изменений?");
+        if (!ok) return;
+        cloud.history = [];
+        persistCloudCache();
+        scheduleSaveCloud();
+        buildTotals();
+      });
+
+      buildTable();
+    </script>
+  </body>
+</html>
+

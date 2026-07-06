@@ -1,0 +1,24 @@
+# Системные файлы
+.DS_Store
+
+# Служебные папки AI-инструментов
+.agents/
+.claude/
+.codex/
+.pydeps/
+.nmt-version
+
+# Канон методологии (отдельный репозиторий)
+Next-Move-Theory-Canon/
+NextMoveTheory-README.md
+AGENTS.md
+CLAUDE.md
+
+# Личные и медиафайлы
+*.xlsx
+*.mp3
+*.docx
+
+# Прочие рабочие файлы, не относящиеся к CRM
+Тециус*.txt
+wakeboard-progress.html

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Одностраничники B2B — УТП 1 и УТП 2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #e8e6e1;
+    color: #2c2c2c;
+    padding: 24px 0;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    background: #fff;
+    margin: 0 auto 24px;
+    padding: 18mm 16mm;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.10);
+    display: flex;
+    flex-direction: column;
+  }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .page { box-shadow: none; margin: 0; page-break-after: always; }
+    .no-print { display: none; }
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #b0a898;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: 27px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #1a1a1a;
+    margin-bottom: 14px;
+  }
+  h1 .accent { color: #4a6fa5; }
+
+  .lead {
+    font-size: 15px;
+    line-height: 1.55;
+    color: #444;
+    margin-bottom: 22px;
+    max-width: 90%;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #b0a898;
+    margin: 20px 0 10px;
+  }
+
+  /* Numbers strip */
+  .numbers {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 6px;
+  }
+  .num-card {
+    flex: 1;
+    background: #f7f6f2;
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .num-card .big {
+    font-size: 26px;
+    font-weight: 700;
+    color: #4a6fa5;
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+  .num-card .small {
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: #666;
+  }
+
+  /* Math block */
+  .math {
+    background: #f2f5f9;
+    border-left: 4px solid #4a6fa5;
+    border-radius: 0 12px 12px 0;
+    padding: 14px 18px;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: #333;
+  }
+  .math b { color: #1a1a1a; }
+  .math .result {
+    display: block;
+    margin-top: 6px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #4a6fa5;
+  }
+
+  /* How it works */
+  .steps {
+    display: flex;
+    gap: 12px;
+  }
+  .step {
+    flex: 1;
+    padding: 12px 14px;
+    background: #fbfaf8;
+    border: 1px solid #ece9e3;
+    border-radius: 12px;
+  }
+  .step .n {
+    display: inline-flex;
+    width: 22px; height: 22px;
+    background: #4a6fa5;
+    color: #fff;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .step .t { font-size: 12.5px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
+  .step .d { font-size: 11.5px; line-height: 1.45; color: #666; }
+
+  /* Guarantee / offer */
+  .offer {
+    background: #1a2a40;
+    color: #fff;
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-top: auto;
+  }
+  .offer .left { max-width: 70%; }
+  .offer .t { font-size: 15px; font-weight: 700; margin-bottom: 5px; }
+  .offer .d { font-size: 12.5px; line-height: 1.5; color: #c8d4e4; }
+  .offer .price {
+    font-size: 20px;
+    font-weight: 700;
+    white-space: nowrap;
+    color: #fff;
+    text-align: right;
+  }
+  .offer .price small { display: block; font-size: 11px; font-weight: 400; color: #c8d4e4; margin-top: 2px; }
+
+  /* fear bullets */
+  .fears { display: flex; flex-direction: column; gap: 7px; }
+  .fear {
+    display: flex;
+    gap: 9px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #444;
+    align-items: flex-start;
+  }
+  .fear .check {
+    color: #4a8a5f;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .fear b { color: #1a1a1a; }
+
+  .footer {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #ece9e3;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #999;
+  }
+
+  .print-hint {
+    text-align: center;
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 18px;
+  }
+</style>
+</head>
+<body>
+
+<p class="print-hint no-print">Для сохранения в PDF: ⌘P → «Сохранить как PDF». Каждое УТП — отдельная страница.</p>
+
+<!-- ============ PAGE 1 — УТП 1: ТЕКУЧКА ============ -->
+<div class="page">
+  <div class="eyebrow">Платформа удержания ключевых сотрудников</div>
+
+  <h1>Вы уже платите за текучку.<br>Мы делаем так, чтобы вы <span class="accent">платили меньше</span>.</h1>
+
+  <p class="lead">Каждый ушедший специалист стоит компании от 1 до 7 окладов: подбор, онбординг, просевшие проекты, знания, которые ушли вместе с человеком. Мы находим сотрудников на грани ухода до того, как они напишут заявление, — и возвращаем их в ресурс.</p>
+
+  <div class="section-title">Сколько это стоит вам сейчас</div>
+  <div class="math">
+    Компания <b>200 человек</b> · текучка <b>15%</b> · средний оклад <b>120 тыс. руб.</b><br>
+    30 увольнений в год × ~3 оклада на замену каждого
+    <span class="result">≈ 10,8 млн руб. в год — прямые потери на текучке</span>
+  </div>
+  <p style="font-size:11.5px;color:#999;margin-top:6px;">На встрече посчитаем на цифрах вашей компании — расчёт занимает 5 минут.</p>
+
+  <div class="section-title">Как это работает</div>
+  <div class="steps">
+    <div class="step">
+      <span class="n">1</span>
+      <div class="t">Диагностика</div>
+      <div class="d">Замеряем уровень выгорания и стресса по командам. Видим, кто в красной зоне, — анонимно для сотрудников, прозрачно для вас на уровне подразделений.</div>
+    </div>
+    <div class="step">
+      <span class="n">2</span>
+      <div class="t">Работа со специалистом</div>
+      <div class="d">Сотрудники из зоны риска получают доступ к клиническим психологам платформы — онлайн, конфиденциально, без записи через HR.</div>
+    </div>
+    <div class="step">
+      <span class="n">3</span>
+      <div class="t">Динамика для бизнеса</div>
+      <div class="d">Ежеквартальный отчёт: динамика состояния команд, вовлечённость в платформу, прогноз рисков ухода.</div>
+    </div>
+  </div>
+
+  <div class="section-title">Что вас может останавливать</div>
+  <div class="fears">
+    <div class="fear"><span class="check">✓</span><span><b>«Сотрудники не пойдут к психологу».</b> Доступ конфиденциальный, без согласования с руководителем. По нашим данным, главный барьер — не стыд, а «со мной всё нормально»: мы работаем с ним через регулярную диагностику, а не через призывы.</span></div>
+    <div class="fear"><span class="check">✓</span><span><b>«HR и так справляется».</b> HR видит проблему, когда заявление уже на столе. Диагностика видит её за 2–3 месяца до этого.</span></div>
+    <div class="fear"><span class="check">✓</span><span><b>«Как я пойму, что это работает?»</b> Фиксируем текучку до старта и через 6 месяцев — по вашим кадровым данным, не по нашим отчётам.</span></div>
+  </div>
+
+  <div class="offer">
+    <div class="left">
+      <div class="t">Пилот на 3 месяца</div>
+      <div class="d">До 50 сотрудников · диагностика + доступ к специалистам + отчёт для руководства. Если по итогам пилота не увидите ценность — продление на ваших условиях.</div>
+    </div>
+    <div class="price">[X] руб.<small>фиксированная стоимость пилота</small></div>
+  </div>
+
+  <div class="footer">
+    <span>[Название продукта] — платформа психологической поддержки бизнеса</span>
+    <span>[контакт] · [телефон]</span>
+  </div>
+</div>
+
+<!-- ============ PAGE 2 — УТП 2: ЭФФЕКТИВНОСТЬ ============ -->
+<div class="page">
+  <div class="eyebrow">Платформа восстановления работоспособности команд</div>
+
+  <h1>Выгоревший сотрудник работает<br>на <span class="accent">50–70% своей мощности</span> —<br>и продолжает получать 100% оклада.</h1>
+
+  <p class="lead">Он не увольняется. Он приходит на работу, сидит на встречах, отвечает на письма — но решения даются медленнее, ошибок больше, инициативы нет. Таких в растущей компании обычно 15–25% команды. Мы возвращаем их в рабочий ресурс.</p>
+
+  <div class="section-title">Цифры</div>
+  <div class="numbers">
+    <div class="num-card">
+      <div class="big">57%</div>
+      <div class="small">компаний называют психологическую поддержку приоритетом соцпакета (НПФ «Достойное будущее», 2025, n=250)</div>
+    </div>
+    <div class="num-card">
+      <div class="big">15–25%</div>
+      <div class="small">сотрудников растущих компаний находятся в состоянии выгорания или высокого стресса</div>
+    </div>
+    <div class="num-card">
+      <div class="big">до +30%</div>
+      <div class="small">целевой рост производительности команды за счёт возвращения «полуприсутствующих» в ресурс</div>
+    </div>
+  </div>
+
+  <div class="section-title">Как это работает</div>
+  <div class="steps">
+    <div class="step">
+      <span class="n">1</span>
+      <div class="t">Замер на старте</div>
+      <div class="d">Диагностика состояния команды: выгорание, стресс, вовлечённость. Получаете честную картину — впервые в цифрах, а не в ощущениях.</div>
+    </div>
+    <div class="step">
+      <span class="n">2</span>
+      <div class="t">Точечная работа</div>
+      <div class="d">Красная зона — индивидуальная работа с клиническим психологом. Жёлтая — групповые форматы и материалы. Зелёная — профилактика.</div>
+    </div>
+    <div class="step">
+      <span class="n">3</span>
+      <div class="t">Динамика в дашборде</div>
+      <div class="d">Ежеквартальный замер тех же метрик. Вы видите тренд по каждому подразделению и связываете его с бизнес-показателями.</div>
+    </div>
+  </div>
+
+  <div class="section-title">Что вас может останавливать</div>
+  <div class="fears">
+    <div class="fear"><span class="check">✓</span><span><b>«+30% звучит как маркетинг».</b> Согласны — поэтому не обещаем, а замеряем. Стартовый замер — базовая линия, дальше динамика видна вам, а не нам.</span></div>
+    <div class="fear"><span class="check">✓</span><span><b>«Проще нанять штатного психолога».</b> Штатный психолог — это один специалист, один график, ноль анонимности и ~150+ тыс. руб./мес. Платформа — команда специалистов под разные запросы плюс аналитика для руководства.</span></div>
+    <div class="fear"><span class="check">✓</span><span><b>«Люди не будут этим пользоваться».</b> Вовлечённость — наша метрика, она в ежеквартальном отчёте. Если платформой не пользуются — вы это видите и не продлеваете.</span></div>
+  </div>
+
+  <div class="offer">
+    <div class="left">
+      <div class="t">Пилот на 3 месяца</div>
+      <div class="d">Замер состояния команды до и после · доступ к специалистам · дашборд для руководства. Решение о продолжении — по данным замера, не по презентации.</div>
+    </div>
+    <div class="price">[X] руб.<small>фиксированная стоимость пилота</small></div>
+  </div>
+
+  <div class="footer">
+    <span>[Название продукта] — платформа психологической поддержки бизнеса</span>
+    <span>[контакт] · [телефон]</span>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM — Проверка гипотез</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f4f0;
+    color: #2c2c2c;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: #fff;
+    border-bottom: 1px solid #e8e4de;
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left h1 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  .header-left p {
+    font-size: 13px;
+    color: #888;
+    margin-top: 2px;
+  }
+  .btn-add {
+    background: #4a6fa5;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+  }
+  .btn-add:hover { background: #3a5a8a; }
+
+  /* REMINDERS BAR */
+  .reminders-bar {
+    background: #fef9ec;
+    border-bottom: 1px solid #f0e8c8;
+    padding: 10px 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow-x: auto;
+  }
+  .reminders-bar-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #b08800;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .reminder-chip {
+    background: #fff;
+    border: 1px solid #f0d88a;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: #5a4a00;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .reminder-chip:hover { background: #fef3c7; border-color: #d4a800; }
+  .reminder-chip .chip-date { color: #b08800; font-weight: 600; }
+
+  /* FILTER BAR */
+  .filter-bar {
+    background: #fff;
+    border-bottom: 1px solid #e8e4de;
+    padding: 10px 28px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+  }
+  .filter-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #999;
+    white-space: nowrap;
+    margin-right: 4px;
+  }
+  .filter-btn {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1.5px solid #e8e4de;
+    background: #f8f7f4;
+    color: #666;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .filter-btn:hover { border-color: #4a6fa5; color: #4a6fa5; }
+  .filter-btn.active {
+    background: #4a6fa5;
+    border-color: #4a6fa5;
+    color: #fff;
+  }
+  .filter-count {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    border-radius: 10px;
+    padding: 0 6px;
+    font-size: 11px;
+    margin-left: 4px;
+  }
+  .filter-btn:not(.active) .filter-count {
+    background: #e8e4de;
+    color: #888;
+  }
+
+  /* BOARD */
+  .board {
+    display: flex;
+    gap: 20px;
+    padding: 24px 28px;
+    overflow-x: auto;
+    align-items: flex-start;
+    min-height: calc(100vh - 130px);
+  }
+
+  .column {
+    background: #eceae4;
+    border-radius: 12px;
+    min-width: 300px;
+    width: 300px;
+    flex-shrink: 0;
+  }
+  .column-header {
+    padding: 14px 16px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .column-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .column-count {
+    background: #d8d5ce;
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 12px;
+    color: #666;
+    font-weight: 600;
+  }
+  .column-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .dot-new { background: #94a3b8; }
+  .dot-sent { background: #f59e0b; }
+  .dot-agreed { background: #3b82f6; }
+  .dot-done { background: #10b981; }
+  .dot-declined { background: #ef4444; }
+
+  .cards-list {
+    padding: 0 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 60px;
+  }
+
+  /* CARD */
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 14px;
+    cursor: pointer;
+    border: 1px solid #e8e4de;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
+  }
+  .card-company {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+  .card-contact {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+  .card-last-action {
+    font-size: 11px;
+    color: #999;
+    line-height: 1.4;
+    border-top: 1px solid #f0ede8;
+    padding-top: 8px;
+    margin-top: 4px;
+  }
+  .card-reminder-flag {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 14px;
+  }
+  .card-tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .tag-b2b { background: #dbeafe; color: #1e40af; }
+  .tag-b2g { background: #d1fae5; color: #065f46; }
+  .tag-cold { background: #fce7f3; color: #9d174d; }
+  .tag-warm { background: #fed7aa; color: #92400e; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 200;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: #f5f4f0;
+    width: 600px;
+    max-width: 95vw;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(20px);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: translateX(0); }
+
+  /* Modal header */
+  .modal-head {
+    background: #fff;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #ece9e3;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .modal-head-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .modal-company {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.2;
+  }
+  .modal-close {
+    background: #f0ede8;
+    border: none;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .modal-close:hover { background: #e0ddd7; color: #333; }
+
+  .status-selector {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .status-btn {
+    padding: 4px 11px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1.5px solid #e0ddd7;
+    background: #f8f7f4;
+    color: #999;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .status-btn.active-new      { background: #f1f5f9; border-color: #94a3b8; color: #475569; }
+  .status-btn.active-sent     { background: #fffbeb; border-color: #f59e0b; color: #92400e; }
+  .status-btn.active-agreed   { background: #eff6ff; border-color: #3b82f6; color: #1e40af; }
+  .status-btn.active-done     { background: #ecfdf5; border-color: #10b981; color: #065f46; }
+  .status-btn.active-declined { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
+
+  /* Meta block */
+  .modal-meta {
+    background: #fff;
+    margin: 12px 16px 0;
+    border-radius: 12px;
+    border: 1px solid #ece9e3;
+    padding: 4px 0;
+  }
+  .meta-row {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 16px;
+    border-bottom: 1px solid #f0ede8;
+    gap: 4px;
+  }
+  .meta-row:last-of-type { border-bottom: none; }
+  .field-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #b0a898;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .field-input {
+    border: none;
+    padding: 0;
+    font-size: 14px;
+    color: #1a1a1a;
+    font-family: inherit;
+    background: transparent;
+    width: 100%;
+    resize: none;
+    line-height: 1.5;
+  }
+  .field-input:focus { outline: none; }
+  .field-input::placeholder { color: #ccc; }
+  select.field-input {
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23bbb' d='M5 7L0 2h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 2px center;
+    padding-right: 16px;
+  }
+  .meta-save-row {
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #f0ede8;
+  }
+  .btn-save-meta {
+    background: #4a6fa5;
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    padding: 7px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-save-meta:hover { background: #3a5a8a; }
+  .btn-delete-meta {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 12px;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .btn-delete-meta:hover { color: #ef4444; }
+
+  .divider { height: 1px; background: #f0ede8; }
+
+  /* REMINDERS in modal */
+  .modal-section {
+    margin: 12px 16px 0;
+  }
+  .modal-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #b0a898;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .reminder-section {
+    background: #fff;
+    border: 1px solid #ece9e3;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .reminder-input-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #f5f2ed;
+  }
+  .reminder-input-row input[type="date"],
+  .reminder-input-row input[type="text"] {
+    border: 1.5px solid #e8e4de;
+    border-radius: 7px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-family: inherit;
+    background: #faf9f7;
+    color: #2c2c2c;
+  }
+  .reminder-input-row input[type="date"] { width: 135px; }
+  .reminder-input-row input[type="text"] { flex: 1; }
+  .reminder-input-row input:focus { outline: none; border-color: #f59e0b; }
+  .btn-reminder {
+    background: #f59e0b;
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .btn-reminder:hover { background: #d97706; }
+  .reminders-list { display: flex; flex-direction: column; }
+  .reminder-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 12px;
+    border-bottom: 1px solid #f5f2ed;
+  }
+  .reminder-item:last-child { border-bottom: none; }
+  .reminder-item-text { font-size: 13px; color: #3a3a3a; }
+  .reminder-item-date { font-size: 11px; color: #f59e0b; font-weight: 600; margin-bottom: 1px; }
+  .reminder-done {
+    background: none; border: none; color: #d0ccc6;
+    cursor: pointer; font-size: 15px; flex-shrink: 0;
+    transition: color 0.15s;
+  }
+  .reminder-done:hover { color: #10b981; }
+
+  /* HISTORY — main accent */
+  .history-section {
+    margin: 12px 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .history-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #b0a898;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 10px;
+  }
+  .history-add {
+    background: #fff;
+    border: 1px solid #ece9e3;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .history-add textarea {
+    border: none;
+    padding: 0;
+    font-size: 14px;
+    font-family: inherit;
+    resize: none;
+    background: transparent;
+    line-height: 1.6;
+    color: #2c2c2c;
+    width: 100%;
+  }
+  .history-add textarea:focus { outline: none; }
+  .history-add textarea::placeholder { color: #ccc; }
+  .history-add-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .history-add-date {
+    font-size: 12px;
+    color: #b0a898;
+  }
+  .btn-history-add {
+    background: #4a6fa5;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-history-add:hover { background: #3a5a8a; }
+
+  /* Timeline */
+  .timeline { display: flex; flex-direction: column; gap: 0; position: relative; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 8px;
+    bottom: 8px;
+    width: 1.5px;
+    background: #ece9e3;
+  }
+  .timeline-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding-bottom: 18px;
+    position: relative;
+  }
+  .timeline-item:last-child { padding-bottom: 0; }
+  .timeline-dot {
+    width: 10px;
+    height: 10px;
+    background: #4a6fa5;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+    border: 2px solid #f5f4f0;
+    z-index: 1;
+    margin-left: 10px;
+  }
+  .timeline-body { flex: 1; }
+  .timeline-date {
+    font-size: 11px;
+    font-weight: 600;
+    color: #b0a898;
+    margin-bottom: 4px;
+    letter-spacing: 0.3px;
+  }
+  .timeline-text {
+    font-size: 14px;
+    color: #2c2c2c;
+    line-height: 1.6;
+    background: #fff;
+    border: 1px solid #ece9e3;
+    border-radius: 10px;
+    padding: 10px 12px;
+    white-space: pre-wrap;
+  }
+  .timeline-delete {
+    background: none; border: none; color: #e0ddd7;
+    cursor: pointer; font-size: 12px; padding: 4px;
+    margin-top: 2px; flex-shrink: 0;
+    transition: color 0.15s;
+  }
+  .timeline-delete:hover { color: #ef4444; }
+  /* Hypothesis checkboxes */
+  .hypothesis-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding-top: 2px;
+  }
+  .hyp-check {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #2c2c2c;
+  }
+  .hyp-check input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: #4a6fa5;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .hyp-check span { line-height: 1.3; }
+
+  .history-empty {
+    text-align: center;
+    padding: 24px;
+    font-size: 13px;
+    color: #ccc;
+    background: #fff;
+    border: 1px dashed #e8e4de;
+    border-radius: 12px;
+  }
+
+  /* NEW CARD MODAL */
+  .new-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .new-modal-overlay.open { opacity: 1; pointer-events: all; }
+  .new-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 28px;
+    width: 480px;
+    max-width: 95vw;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transform: scale(0.96);
+    transition: transform 0.2s;
+  }
+  .new-modal-overlay.open .new-modal { transform: scale(1); }
+  .new-modal h2 { font-size: 18px; font-weight: 700; }
+  .new-modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+  .btn-cancel {
+    background: #f0ede8;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-size: 14px;
+    cursor: pointer;
+    color: #555;
+    transition: background 0.15s;
+  }
+  .btn-cancel:hover { background: #e5e0da; }
+  .btn-save {
+    background: #4a6fa5;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-save:hover { background: #3a5a8a; }
+
+  .empty-col {
+    text-align: center;
+    padding: 20px 10px;
+    font-size: 12px;
+    color: #bbb;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>CRM — Проверка гипотез</h1>
+    <p>Цель воронки — проведение целевого интервью</p>
+  </div>
+  <button class="btn-add" onclick="openNewModal()">+ Добавить контакт</button>
+</div>
+
+<div class="reminders-bar" id="remindersBar">
+  <div class="reminders-bar-label">⏰ Напоминания</div>
+  <!-- динамически -->
+</div>
+
+<div class="filter-bar" id="filterBar"></div>
+
+<div class="board" id="board">
+  <!-- колонки рендерятся JS -->
+</div>
+
+<!-- CARD DETAIL MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="modal">
+
+    <!-- Sticky header -->
+    <div class="modal-head">
+      <div class="modal-head-top">
+        <div class="modal-company" id="modalCompany"></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+          <button class="btn-save-meta" onclick="saveCard()">Сохранить</button>
+          <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+      </div>
+      <div class="status-selector" id="statusSelector"></div>
+    </div>
+
+    <!-- Meta fields -->
+    <div class="modal-meta">
+      <div class="meta-row">
+        <div class="field-label">Компания</div>
+        <input class="field-input" id="editCompany" placeholder="Название компании" />
+      </div>
+      <div class="meta-row">
+        <div class="field-label">Ответственный</div>
+        <input class="field-input" id="editOwner" placeholder="Кто ведёт" />
+      </div>
+      <div class="meta-row">
+        <div class="field-label">Какую гипотезу проверяем?</div>
+        <div class="hypothesis-checks" id="editSegment">
+          <label class="hyp-check"><input type="checkbox" value="b2g-vet"><span>B2G — ветераны</span></label>
+          <label class="hyp-check"><input type="checkbox" value="b2b-vet"><span>B2B — ветераны</span></label>
+          <label class="hyp-check"><input type="checkbox" value="b2b-eff"><span>B2B — управление эффективностью</span></label>
+        </div>
+      </div>
+      <div class="meta-row">
+        <div class="field-label">Источник</div>
+        <select class="field-input" id="editSource">
+          <option value="">—</option>
+          <option value="warm">Тёплый (личные связи)</option>
+          <option value="cold">Холодный (исходящий)</option>
+          <option value="inbound">Входящий</option>
+          <option value="event">Конференция / мероприятие</option>
+          <option value="partner">Партнёр</option>
+        </select>
+      </div>
+      <div class="meta-row">
+        <div class="field-label">Контакт внутри компании</div>
+        <input class="field-input" id="editContactName" placeholder="ФИО, должность" />
+      </div>
+      <div class="meta-row">
+        <div class="field-label">Телефон / Email / TG</div>
+        <textarea class="field-input" id="editContacts" rows="2" placeholder="+7 ... / email@... / @telegram"></textarea>
+      </div>
+      <div class="meta-save-row">
+        <button class="btn-delete-meta" onclick="deleteCard()">Удалить контакт</button>
+        <button class="btn-save-meta" onclick="saveCard()">Сохранить изменения</button>
+      </div>
+    </div>
+
+    <!-- Reminders -->
+    <div class="modal-section">
+      <div class="modal-section-title">⏰ Напоминания</div>
+      <div class="reminder-section">
+        <div class="reminder-input-row">
+          <input type="date" id="reminderDate" />
+          <input type="text" id="reminderText" placeholder="Что нужно сделать..." />
+          <button class="btn-reminder" onclick="addReminder()">+ Добавить</button>
+        </div>
+        <div class="reminders-list" id="remindersList"></div>
+      </div>
+    </div>
+
+    <!-- History — main accent -->
+    <div class="history-section">
+      <div class="history-title">История действий</div>
+      <div class="history-add">
+        <textarea id="newComment" rows="3" placeholder="Запишите что сделано, о чём договорились, какой результат..."></textarea>
+        <div class="history-add-footer">
+          <span class="history-add-date" id="historyTodayDate"></span>
+          <button class="btn-history-add" onclick="addComment()">Добавить запись</button>
+        </div>
+      </div>
+      <div class="timeline" id="commentsList"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- NEW CARD MODAL -->
+<div class="new-modal-overlay" id="newModalOverlay" onclick="handleNewOverlayClick(event)">
+  <div class="new-modal">
+    <h2>Новый контакт</h2>
+    <div class="field-group">
+      <div class="field-label">Компания *</div>
+      <input class="field-input" id="newCompany" placeholder="Название компании" />
+    </div>
+    <div class="field-group">
+      <div class="field-label">Какую гипотезу проверяем?</div>
+      <div class="hypothesis-checks" id="newSegment">
+        <label class="hyp-check"><input type="checkbox" value="b2g-vet"><span>B2G — ветераны</span></label>
+        <label class="hyp-check"><input type="checkbox" value="b2b-vet"><span>B2B — ветераны</span></label>
+        <label class="hyp-check"><input type="checkbox" value="b2b-eff"><span>B2B — управление эффективностью</span></label>
+      </div>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Источник контакта</div>
+      <select class="field-input" id="newSource">
+        <option value="">— не выбран —</option>
+        <option value="warm">Тёплый (личные связи)</option>
+        <option value="cold">Холодный (исходящий)</option>
+        <option value="inbound">Входящий</option>
+        <option value="event">Конференция / мероприятие</option>
+        <option value="partner">Партнёр</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Контакт внутри компании</div>
+      <input class="field-input" id="newContactName" placeholder="ФИО, должность" />
+    </div>
+    <div class="field-group">
+      <div class="field-label">Контакты</div>
+      <textarea class="field-input" id="newContacts" rows="2" placeholder="Телефон, email, TG..."></textarea>
+    </div>
+    <div class="new-modal-btns">
+      <button class="btn-cancel" onclick="closeNewModal()">Отмена</button>
+      <button class="btn-save" onclick="createCard()">Создать</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STATUSES = [
+  { key: 'new',      label: 'Новый',               cls: 'dot-new',      activeCls: 'active-new' },
+  { key: 'sent',     label: 'Отправлен запрос',     cls: 'dot-sent',     activeCls: 'active-sent' },
+  { key: 'agreed',   label: 'Согласовано интервью', cls: 'dot-agreed',   activeCls: 'active-agreed' },
+  { key: 'done',     label: 'Провели интервью',     cls: 'dot-done',     activeCls: 'active-done' },
+  { key: 'declined', label: 'Отказ',                cls: 'dot-declined', activeCls: 'active-declined' },
+];
+
+const SEGMENT_LABELS = { 'b2g-vet': 'B2G — ветераны', 'b2b-vet': 'B2B — ветераны', 'b2b-eff': 'B2B — эффективность' };
+const SOURCE_LABELS   = { warm: 'Тёплый', cold: 'Холодный', inbound: 'Входящий', event: 'Конференция', partner: 'Партнёр' };
+const SOURCE_TAG_CLS  = { warm: 'tag-warm', cold: 'tag-cold', inbound: 'tag-b2b', event: 'tag-b2b', partner: 'tag-b2g' };
+
+function loadData() {
+  const raw = localStorage.getItem('crm_cards');
+  if (raw) return JSON.parse(raw);
+  return getDefaultCards();
+}
+
+function saveData(cards) {
+  localStorage.setItem('crm_cards', JSON.stringify(cards));
+}
+
+function getDefaultCards() {
+  return [
+    {
+      id: uid(), company: 'Ростелеком', status: 'done', segments: ['b2b-eff'], source: 'warm',
+      contactName: 'Истомова Анна — руководитель направления автоматизации кадрового подбора и документооборота',
+      contacts: '+7 (909) 910 57 98',
+      comments: [
+        { id: uid(), date: '2026-06-02', text: 'Ярослава написала бывшей коллеге, которая работает в РТК. Договорились об интервью.' },
+        { id: uid(), date: '2026-06-03', text: 'Провели целевое интервью.' },
+      ],
+      reminders: []
+    },
+    {
+      id: uid(), company: 'РостАгро', status: 'sent', segments: ['b2b-eff'], source: 'event',
+      contactName: 'Шакирова Оксана — HRD (контакт после конференции Поток)',
+      contacts: '+7 (927) 287 85 88\n@oksaHRD58\no.shakirova@gkrostagro.ru',
+      comments: [
+        { id: uid(), date: '2026-06-03', text: 'Написали запрос на интервью в TG. Если не ответит — написать на почту.' },
+      ],
+      reminders: [{ id: uid(), date: '2026-07-01', text: 'Если нет ответа в TG — написать на почту' }]
+    },
+    {
+      id: uid(), company: 'НКО Счастье', status: 'done', segments: ['b2g-vet'], source: 'event',
+      contactName: 'Токарева Ирина — генеральный директор центра инклюзивного образования и социальной адаптации «Счастье»',
+      contacts: '+7 (922) 413-75-75\nhappi86@bk.ru',
+      comments: [
+        { id: uid(), date: '2026-06-03', text: 'Написали запрос на почту — поиск точек пересечения. Ирина задавала вопросы после выступления — зацепились через них.' },
+        { id: uid(), date: '2026-06-04', text: 'Ирина ответила на почту — согласовали встречу на 10 июня.' },
+        { id: uid(), date: '2026-06-10', text: 'Встреча не состоялась. Ирина не смогла. Перенесли на 16.06.' },
+        { id: uid(), date: '2026-06-16', text: 'Провели встречу-интервью, ближе познакомились с деятельностью друг друга.' },
+      ],
+      reminders: []
+    },
+    {
+      id: uid(), company: 'Melon Fashion Group', status: 'sent', segments: ['b2b-eff'], source: 'cold',
+      contactName: 'Емельянова Юлия — зам. директора по персоналу',
+      contacts: 'emelyanovayuv@melonfashion.com',
+      comments: [
+        { id: uid(), date: '2026-06-03', text: 'Написали запрос на интервью на почту — холодный заход. Почту нашли на LinkedIn. Не факт, что Юлия ещё работает в компании.' },
+      ],
+      reminders: []
+    },
+    {
+      id: uid(), company: 'Melon Fashion Group', status: 'sent', segments: ['b2b-eff'], source: 'cold',
+      contactName: 'Бичевая Елена — директор по персоналу',
+      contacts: 'bichevayaev@melonfashion.com\nbichevayae@melonfashion.com',
+      comments: [
+        { id: uid(), date: '2026-06-03', text: 'Написали запрос на интервью на почту — холодный заход. Почту сформировали по шаблону из примера Юлии (отправили 2 письма). Не факт, что Елена ещё в компании.' },
+      ],
+      reminders: []
+    },
+  ];
+}
+
+function uid() { return Math.random().toString(36).slice(2,10); }
+
+let cards = loadData();
+let currentId = null;
+let activeOwnerFilter = null;
+
+// ——— RENDER ———
+
+function render() {
+  renderFilterBar();
+  renderBoard();
+  renderRemindersBar();
+}
+
+function renderFilterBar() {
+  const bar = document.getElementById('filterBar');
+  const owners = [...new Set(cards.map(c => c.owner).filter(Boolean))].sort();
+
+  if (owners.length === 0) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+
+  const allCount = cards.length;
+  let html = `<span class="filter-label">Ответственный:</span>`;
+  html += `<button class="filter-btn ${activeOwnerFilter === null ? 'active' : ''}" onclick="setOwnerFilter(null)">Все <span class="filter-count">${allCount}</span></button>`;
+  owners.forEach(owner => {
+    const count = cards.filter(c => c.owner === owner).length;
+    const isActive = activeOwnerFilter === owner;
+    html += `<button class="filter-btn ${isActive ? 'active' : ''}" onclick="setOwnerFilter('${owner.replace(/'/g, "\\'")}')">
+      ${esc(owner)} <span class="filter-count">${count}</span>
+    </button>`;
+  });
+  bar.innerHTML = html;
+}
+
+function setOwnerFilter(owner) {
+  activeOwnerFilter = owner;
+  render();
+}
+
+function renderBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  STATUSES.forEach(st => {
+    const col = document.createElement('div');
+    col.className = 'column';
+    const filtered = cards.filter(c => c.status === st.key && (activeOwnerFilter === null || c.owner === activeOwnerFilter));
+    col.innerHTML = `
+      <div class="column-header">
+        <div class="column-title">
+          <span class="column-dot ${st.cls}"></span>
+          ${st.label}
+        </div>
+        <span class="column-count">${filtered.length}</span>
+      </div>
+      <div class="cards-list" id="col-${st.key}">
+        ${filtered.length === 0 ? '<div class="empty-col">Нет контактов</div>' : ''}
+      </div>
+    `;
+    board.appendChild(col);
+    const list = col.querySelector(`#col-${st.key}`);
+    filtered.forEach(card => {
+      list.appendChild(renderCard(card));
+    });
+  });
+}
+
+function renderCard(card) {
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.onclick = () => openModal(card.id);
+
+  const hasReminder = card.reminders && card.reminders.length > 0;
+  const lastComment = card.comments && card.comments.length > 0
+    ? card.comments[card.comments.length - 1]
+    : null;
+
+  const segCls  = { 'b2g-vet': 'tag-b2g', 'b2b-vet': 'tag-b2b', 'b2b-eff': 'tag-warm' };
+  const segs    = Array.isArray(card.segments) ? card.segments : (card.segment ? [card.segment] : []);
+  const segTag  = segs.map(s => `<span class="tag ${segCls[s] || ''}">${SEGMENT_LABELS[s] || s}</span>`).join('');
+  const srcTag  = card.source  ? `<span class="tag ${SOURCE_TAG_CLS[card.source] || ''}">${SOURCE_LABELS[card.source]}</span>` : '';
+  const tags    = (segTag || srcTag) ? `<div class="card-tags">${segTag}${srcTag}</div>` : '';
+  const flag    = hasReminder ? `<span class="card-reminder-flag" title="Есть напоминание">⏰</span>` : '';
+  const last    = lastComment
+    ? `<div class="card-last-action">${formatDate(lastComment.date)} · ${lastComment.text.slice(0,80)}${lastComment.text.length > 80 ? '…' : ''}</div>`
+    : '';
+
+  el.innerHTML = `
+    ${flag}
+    <div class="card-company">${esc(card.company)}</div>
+    ${tags}
+    <div class="card-contact">${esc(card.contactName || '')}</div>
+    ${last}
+  `;
+  return el;
+}
+
+function renderRemindersBar() {
+  const bar = document.getElementById('remindersBar');
+  const today = new Date().toISOString().slice(0,10);
+  const upcoming = [];
+  cards.forEach(card => {
+    (card.reminders || []).forEach(r => {
+      if (r.date >= today) upcoming.push({ card, reminder: r });
+    });
+  });
+  upcoming.sort((a,b) => a.reminder.date.localeCompare(b.reminder.date));
+
+  const chips = upcoming.slice(0,8).map(({ card, reminder }) => `
+    <div class="reminder-chip" onclick="openModal('${card.id}')">
+      <span class="chip-date">${formatDate(reminder.date)}</span>
+      ${esc(card.company)} — ${esc(reminder.text.slice(0,40))}${reminder.text.length>40?'…':''}
+    </div>
+  `).join('');
+
+  bar.innerHTML = `<div class="reminders-bar-label">⏰ Напоминания</div>${chips || '<span style="font-size:12px;color:#ccc;">Нет предстоящих напоминаний</span>'}`;
+  bar.style.display = upcoming.length === 0 ? 'none' : 'flex';
+}
+
+// ——— MODAL ———
+
+function openModal(id) {
+  currentId = id;
+  const card = cards.find(c => c.id === id);
+  if (!card) return;
+
+  document.getElementById('modalCompany').textContent = card.company;
+  document.getElementById('editCompany').value     = card.company || '';
+  document.getElementById('editOwner').value       = card.owner || '';
+  document.getElementById('editSource').value      = card.source  || '';
+  document.getElementById('editContactName').value = card.contactName || '';
+  document.getElementById('editContacts').value    = card.contacts || '';
+  const segments = Array.isArray(card.segments) ? card.segments : (card.segment ? [card.segment] : []);
+  document.querySelectorAll('#editSegment input[type="checkbox"]').forEach(cb => {
+    cb.checked = segments.includes(cb.value);
+  });
+
+  const sel = document.getElementById('statusSelector');
+  sel.innerHTML = STATUSES.map(st => `
+    <button class="status-btn ${card.status === st.key ? st.activeCls : ''}"
+      onclick="setStatus('${st.key}')">${st.label}</button>
+  `).join('');
+
+  document.getElementById('historyTodayDate').textContent = formatDate(today());
+  renderComments(card);
+  renderRemindersList(card);
+
+  document.getElementById('newComment').value = '';
+  document.getElementById('reminderDate').value = '';
+  document.getElementById('reminderText').value = '';
+
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  currentId = null;
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function setStatus(key) {
+  const card = cards.find(c => c.id === currentId);
+  if (!card) return;
+  card.status = key;
+  const sel = document.getElementById('statusSelector');
+  sel.querySelectorAll('.status-btn').forEach((btn, i) => {
+    btn.className = `status-btn ${STATUSES[i].key === key ? STATUSES[i].activeCls : ''}`;
+  });
+}
+
+function saveCard() {
+  const card = cards.find(c => c.id === currentId);
+  if (!card) return;
+  card.company     = document.getElementById('editCompany').value.trim();
+  card.owner       = document.getElementById('editOwner').value.trim();
+  card.segments    = [...document.querySelectorAll('#editSegment input[type="checkbox"]:checked')].map(cb => cb.value);
+  card.source      = document.getElementById('editSource').value;
+  card.contactName = document.getElementById('editContactName').value.trim();
+  card.contacts    = document.getElementById('editContacts').value.trim();
+  saveData(cards);
+  render();
+  document.getElementById('modalCompany').textContent = card.company;
+  showToast('Сохранено');
+}
+
+function deleteCard() {
+  if (!confirm('Удалить этот контакт?')) return;
+  cards = cards.filter(c => c.id !== currentId);
+  saveData(cards);
+  render();
+  closeModal();
+}
+
+// ——— COMMENTS ———
+
+function renderComments(card) {
+  const list = document.getElementById('commentsList');
+  if (!card.comments || card.comments.length === 0) {
+    list.innerHTML = '<div class="history-empty">Записей пока нет — добавьте первую выше</div>';
+    return;
+  }
+  const items = [...card.comments].reverse();
+  list.innerHTML = items.map(c => `
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-body">
+        <div class="timeline-date">${formatDate(c.date)}</div>
+        <div class="timeline-text">${esc(c.text)}</div>
+      </div>
+      <button class="timeline-delete" onclick="deleteComment('${c.id}')" title="Удалить">✕</button>
+    </div>
+  `).join('');
+}
+
+function addComment() {
+  const text = document.getElementById('newComment').value.trim();
+  if (!text) return;
+  const card = cards.find(c => c.id === currentId);
+  if (!card) return;
+  if (!card.comments) card.comments = [];
+  card.comments.push({ id: uid(), date: today(), text });
+  document.getElementById('newComment').value = '';
+  saveData(cards);
+  renderComments(card);
+  render();
+}
+
+function deleteComment(cid) {
+  const card = cards.find(c => c.id === currentId);
+  if (!card) return;
+  card.comments = card.comments.filter(c => c.id !== cid);
+  saveData(cards);
+  renderComments(card);
+}
+
+// ——— REMINDERS ———
+
+function renderRemindersList(card) {
+  const list = document.getElementById('remindersList');
+  if (!card.reminders || card.reminders.length === 0) {
+    list.innerHTML = '';
+    return;
+  }
+  list.innerHTML = card.reminders.map(r => `
+    <div class="reminder-item">
+      <div>
+        <div class="reminder-item-date">${formatDate(r.date)}</div>
+        <div class="reminder-item-text">${esc(r.text)}</div>
+      </div>
+      <button class="reminder-done" onclick="removeReminder('${r.id}')" title="Выполнено / убрать">✓</button>
+    </div>
+  `).join('');
+}
+
+function addReminder() {
+  const date = document.getElementById('reminderDate').value;
+  const text = document.getElementById('reminderText').value.trim();
+  if (!date || !text) return;
+  const card = cards.find(c => c.id === currentId);
+  if (!card) return;
+  if (!card.reminders) card.reminders = [];
+  card.reminders.push({ id: uid(), date, text });
+  document.getElementById('reminderDate').value = '';
+  document.getElementById('reminderText').value = '';
+  saveData(cards);
+  renderRemindersList(card);
+  renderRemindersBar();
+}
+
+function removeReminder(rid) {
+  const card = cards.find(c => c.id === currentId);
+  if (!card) return;
+  card.reminders = card.reminders.filter(r => r.id !== rid);
+  saveData(cards);
+  renderRemindersList(card);
+  renderRemindersBar();
+}
+
+// ——— NEW CARD ———
+
+function openNewModal() {
+  document.getElementById('newCompany').value = '';
+  document.getElementById('newSegment').value = '';
+  document.getElementById('newSource').value  = '';
+  document.getElementById('newContactName').value = '';
+  document.getElementById('newContacts').value = '';
+  document.getElementById('newModalOverlay').classList.add('open');
+}
+
+function closeNewModal() {
+  document.getElementById('newModalOverlay').classList.remove('open');
+}
+
+function handleNewOverlayClick(e) {
+  if (e.target === document.getElementById('newModalOverlay')) closeNewModal();
+}
+
+function createCard() {
+  const company = document.getElementById('newCompany').value.trim();
+  if (!company) { alert('Введите название компании'); return; }
+  const card = {
+    id: uid(),
+    company,
+    segments:    [...document.querySelectorAll('#newSegment input[type="checkbox"]:checked')].map(cb => cb.value),
+    source:      document.getElementById('newSource').value,
+    contactName: document.getElementById('newContactName').value.trim(),
+    contacts:    document.getElementById('newContacts').value.trim(),
+    status:      'new',
+    comments:    [],
+    reminders:   [],
+  };
+  cards.unshift(card);
+  saveData(cards);
+  render();
+  closeNewModal();
+  openModal(card.id);
+}
+
+// ——— UTILS ———
+
+function today() { return new Date().toISOString().slice(0,10); }
+
+function formatDate(str) {
+  if (!str) return '';
+  const [y,m,d] = str.split('-');
+  return `${d}.${m}.${y}`;
+}
+
+function esc(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  Object.assign(t.style, {
+    position:'fixed', bottom:'28px', left:'50%', transform:'translateX(-50%)',
+    background:'#2c2c2c', color:'#fff', borderRadius:'8px', padding:'8px 18px',
+    fontSize:'13px', zIndex:'999', opacity:'1', transition:'opacity 0.4s'
+  });
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 1800);
+}
+
+render();
+</script>
+</body>
+</html>
